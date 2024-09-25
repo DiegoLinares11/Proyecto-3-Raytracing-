@@ -5,7 +5,9 @@ mod camera;
 mod light;
 mod material;
 mod framebuffer;
+mod plane;
 mod block; // Asegúrate de que este módulo esté incluido
+
 
 use minifb::{Window, WindowOptions, Key};
 use nalgebra_glm::{Vec3, normalize};
@@ -20,6 +22,10 @@ use crate::camera::Camera;
 use crate::light::Light;
 use crate::material::Material;
 use crate::block::Block; // Importa la clase Block
+use crate::plane::Plane;
+
+
+
 
 const ORIGIN_BIAS: f32 = 1e-4;
 const SKYBOX_COLOR: Color = Color::new(68, 142, 228);
@@ -84,12 +90,25 @@ fn cast_shadow(
     shadow_intensity
 }
 
+pub fn fresnel(incident: &Vec3, normal: &Vec3, n1: f32, n2: f32) -> f32 {
+    let cosi = incident.dot(normal).max(-1.0).min(1.0);
+    let sint2 = (n1 / n2) * (1.0 - cosi * cosi);
+    if sint2 > 1.0 {
+        return 1.0; // Total internal reflection
+    }
+    let cost = (1.0 - sint2).sqrt();
+    let r0 = ((n1 - n2) / (n1 + n2)).powi(2);
+    r0 + (1.0 - r0) * (1.0 - cost).powi(5)
+}
+
+
 pub fn cast_ray(
     ray_origin: &Vec3,
     ray_direction: &Vec3,
     objects: &[Box<dyn RayIntersect>],
     lights: &[Light],
     depth: u32,
+
 ) -> Color {
     if depth > 3 {
         return SKYBOX_COLOR;
@@ -126,6 +145,9 @@ pub fn cast_ray(
         let specular_intensity = view_dir.dot(&reflect_dir).max(0.0).powf(intersect.material.specular);
         let specular = light.color.scale(intersect.material.albedo[1]) * specular_intensity * light_intensity;
 
+        let reflectivity = fresnel(&view_dir, &intersect.normal, 1.0, intersect.material.refractive_index);
+        let refractivity = 1.0 - reflectivity;
+
         let reflect_color = if intersect.material.albedo[2] > 0.0 {
             let reflect_dir = reflect(&ray_direction, &intersect.normal).normalize();
             let reflect_origin = offset_origin(&intersect, &reflect_dir);
@@ -141,14 +163,15 @@ pub fn cast_ray(
         } else {
             Color::black()
         };
-
+        // Combina los colores con los factores de Fresnel
         color = color.add(&(diffuse + specular).scale(1.0 - intersect.material.albedo[2] - intersect.material.albedo[3]))
-                      .add(&reflect_color.scale(intersect.material.albedo[2]))
-                      .add(&refract_color.scale(intersect.material.albedo[3]));
+                    .add(&reflect_color.scale(reflectivity * intersect.material.albedo[2]))
+                    .add(&refract_color.scale(refractivity * intersect.material.albedo[3]));
     }
 
     color
 }
+
 
 
 
@@ -180,10 +203,10 @@ pub fn render(framebuffer: &mut Framebuffer, objects: &[Box<dyn RayIntersect>], 
 
 
 fn main() {
-    let window_width = 100;
-    let window_height = 50;
-    let framebuffer_width = 100;
-    let framebuffer_height = 50;
+    let window_width = 400;
+    let window_height = 250;
+    let framebuffer_width = 400;
+    let framebuffer_height =250;
     let frame_delay = Duration::from_millis(16);
     let rotation_speed = 0.05; // Ajusta este valor según lo necesario
 
@@ -259,13 +282,56 @@ fn main() {
         0.5,
     );
 
+
     let objects: Vec<Box<dyn RayIntersect>> = vec![
-        Box::new(Block { min: Vec3::new(-2.0, -2.0, -2.0), max: Vec3::new(-1.0, 2.0, -1.0), material: water_material }), // Agua a la izquierda
-        Box::new(Block { min: Vec3::new(1.0, -2.0, -2.0), max: Vec3::new(2.0, 2.0, -1.0), material: water_material }), // Agua a la derecha
-        Box::new(Block { min: Vec3::new(-0.5, -0.5, -1.0), max: Vec3::new(0.5, 0.5, 0.0), material: lava_material }),
-        Box::new(Block { min: Vec3::new(-3.5, -1.5, 0.0), max: Vec3::new(1.5, 1.5, 2.0), material: block_material }),
-        Box::new(Block { min: Vec3::new(3.0, -2.0, -1.0), max: Vec3::new(4.0, 2.0, 1.0), material: glass }) // Espejo en el lado derecho
-        ];
+        // Agua
+        Box::new(Block { 
+            min: Vec3::new(-2.0, -2.0, -2.0), 
+            max: Vec3::new(-1.0, 2.0, -1.0), 
+            material: water_material 
+        }),
+        Box::new(Block { 
+            min: Vec3::new(1.0, -2.0, -2.0), 
+            max: Vec3::new(2.0, 2.0, -1.0), 
+            material: water_material 
+        }),
+
+        // Bloque de lava en el centro
+        Box::new(Block { 
+            min: Vec3::new(-0.5, -0.5, -1.0), 
+            max: Vec3::new(0.5, 0.5, 0.0), 
+            material: lava_material 
+        }),
+
+        // Espejo en el fondo derecho
+        Box::new(Block { 
+            min: Vec3::new(3.0, -2.0, -1.0), 
+            max: Vec3::new(4.0, 2.0, 1.0), 
+            material: mirror 
+        }),
+
+        // Bloque de madera a la izquierda
+        Box::new(Block { 
+            min: Vec3::new(-3.5, -1.5, 0.0), 
+            max: Vec3::new(1.5, 1.5, 2.0), 
+            material: block_material 
+        }),
+
+        // Bloques con diferentes materiales para variedad visual
+        Box::new(Block { 
+            min: Vec3::new(-3.5, -1.5, 0.0), 
+            max: Vec3::new(1.5, 1.5, 2.0), 
+            material: ivory 
+        }),
+        Box::new(Block { 
+            min: Vec3::new(3.0, -2.0, -1.0), 
+            max: Vec3::new(4.0, 2.0, 1.0), 
+            material: rubber 
+        }),
+    ];
+
+
+    
 
     let mut camera = Camera::new(
         Vec3::new(0.0, 0.0, 5.0),
@@ -293,6 +359,14 @@ fn main() {
 
         if window.is_key_down(Key::Down) {
             camera.orbit(0.0, rotation_speed);
+        }
+
+        // Manejo de la entrada del teclado
+        if window.is_key_down(Key::S) {
+            camera.zoom(-0.1); // Acercar
+        }
+        if window.is_key_down(Key::W) {
+            camera.zoom(0.1); // Alejar
         }
 
         render(&mut framebuffer, &objects, &camera, &lights);

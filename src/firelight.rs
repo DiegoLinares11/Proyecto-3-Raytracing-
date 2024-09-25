@@ -1,4 +1,4 @@
-// fire.rs
+
 use crate::light::Light;
 use nalgebra_glm::{Vec3, dot};
 use crate::ray_intersect::{RayIntersect, Intersect};
@@ -13,7 +13,7 @@ pub struct FireLight {
 }
 
 impl FireLight {
-    pub fn new(position: Vec3, color: Color, intensity: f32, flicker: f32) -> Self {
+    fn new(position: Vec3, color: Color, intensity: f32, flicker: f32) -> Self {
         FireLight { position, color, intensity, flicker }
     }
 
