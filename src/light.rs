@@ -5,14 +5,16 @@ pub struct Light {
     pub position: Vec3,
     pub color: Color,
     pub intensity: f32,
+    pub active: bool,
 }
 
 impl Light {
-    pub fn new(position: Vec3, color: Color, intensity: f32) -> Self {
+    pub fn new(position: Vec3, color: Color, intensity: f32, active: bool) -> Self {
         Light {
             position,
             color,
             intensity,
+            active,
         }
     }
 }

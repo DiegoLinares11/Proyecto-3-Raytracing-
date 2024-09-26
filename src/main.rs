@@ -1,380 +1,375 @@
-mod ray_intersect;
-mod sphere;
-mod color;
-mod camera;
-mod light;
-mod material;
-mod framebuffer;
-mod plane;
-mod block; // Asegúrate de que este módulo esté incluido
+    mod ray_intersect;
+    mod sphere;
+    mod color;
+    mod camera;
+    mod light;
+    mod material;
+    mod framebuffer;
+    mod plane;
+    mod block; // Asegúrate de que este módulo esté incluido
 
 
-use minifb::{Window, WindowOptions, Key};
-use nalgebra_glm::{Vec3, normalize};
-use std::time::Duration;
-use std::f32::consts::PI;
+    use minifb::{Window, WindowOptions, Key};
+    use nalgebra_glm::{Vec3, normalize};
+    use std::time::Duration;
+    use std::f32::consts::PI;
 
-use crate::color::Color;
-use crate::ray_intersect::{Intersect, RayIntersect};
-use crate::sphere::Sphere;
-use crate::framebuffer::Framebuffer;
-use crate::camera::Camera;
-use crate::light::Light;
-use crate::material::Material;
-use crate::block::Block; // Importa la clase Block
-use crate::plane::Plane;
-
-
+    use crate::color::Color;
+    use crate::ray_intersect::{Intersect, RayIntersect};
+    use crate::sphere::Sphere;
+    use crate::framebuffer::Framebuffer;
+    use crate::camera::Camera;
+    use crate::light::Light;
+    use crate::material::Material;
+    use crate::block::Block; // Importa la clase Block
+    use crate::plane::Plane;
 
 
-const ORIGIN_BIAS: f32 = 1e-4;
-const SKYBOX_COLOR: Color = Color::new(68, 142, 228);
 
-fn offset_origin(intersect: &Intersect, direction: &Vec3) -> Vec3 {
-    let offset = intersect.normal * ORIGIN_BIAS;
-    if direction.dot(&intersect.normal) < 0.0 {
-        intersect.point - offset
-    } else {
-        intersect.point + offset
-    }
-}
 
-fn reflect(incident: &Vec3, normal: &Vec3) -> Vec3 {
-    incident - 2.0 * incident.dot(normal) * normal
-}
+    const ORIGIN_BIAS: f32 = 1e-4;
+    const SKYBOX_COLOR: Color = Color::new(68, 142, 228);
 
-fn refract(incident: &Vec3, normal: &Vec3, eta_t: f32) -> Vec3 {
-    let cosi = -incident.dot(normal).max(-1.0).min(1.0);
-
-    let (n_cosi, eta, n_normal);
-
-    if cosi < 0.0 {
-        n_cosi = -cosi;
-        eta = 1.0 / eta_t;
-        n_normal = -normal;
-    } else {
-        n_cosi = cosi;
-        eta = eta_t;
-        n_normal = *normal;
-    }
-
-    let k = 1.0 - eta * eta * (1.0 - n_cosi * n_cosi);
-
-    if k < 0.0 {
-        reflect(incident, &n_normal)
-    } else {
-        eta * incident + (eta * n_cosi - k.sqrt()) * n_normal
-    }
-}
-
-fn cast_shadow(
-    intersect: &Intersect,
-    light: &Light,
-    objects: &[Box<dyn RayIntersect>], // Use Box<dyn RayIntersect> for polymorphism
-) -> f32 {
-    let light_dir = (light.position - intersect.point).normalize();
-    let light_distance = (light.position - intersect.point).magnitude();
-
-    let shadow_ray_origin = offset_origin(intersect, &light_dir);
-    let mut shadow_intensity = 0.0;
-
-    for object in objects.iter() {
-        let shadow_intersect = object.ray_intersect(&shadow_ray_origin, &light_dir);
-        if shadow_intersect.is_intersecting && shadow_intersect.distance < light_distance {
-            let distance_ratio = shadow_intersect.distance / light_distance;
-            shadow_intensity = 1.0 - distance_ratio.powf(2.0).min(1.0);
-            break;
+    fn offset_origin(intersect: &Intersect, direction: &Vec3) -> Vec3 {
+        let offset = intersect.normal * ORIGIN_BIAS;
+        if direction.dot(&intersect.normal) < 0.0 {
+            intersect.point - offset
+        } else {
+            intersect.point + offset
         }
     }
 
-    shadow_intensity
-}
-
-pub fn fresnel(incident: &Vec3, normal: &Vec3, n1: f32, n2: f32) -> f32 {
-    let cosi = incident.dot(normal).max(-1.0).min(1.0);
-    let sint2 = (n1 / n2) * (1.0 - cosi * cosi);
-    if sint2 > 1.0 {
-        return 1.0; // Total internal reflection
-    }
-    let cost = (1.0 - sint2).sqrt();
-    let r0 = ((n1 - n2) / (n1 + n2)).powi(2);
-    r0 + (1.0 - r0) * (1.0 - cost).powi(5)
-}
-
-
-pub fn cast_ray(
-    ray_origin: &Vec3,
-    ray_direction: &Vec3,
-    objects: &[Box<dyn RayIntersect>],
-    lights: &[Light],
-    depth: u32,
-
-) -> Color {
-    if depth > 3 {
-        return SKYBOX_COLOR;
+    fn reflect(incident: &Vec3, normal: &Vec3) -> Vec3 {
+        incident - 2.0 * incident.dot(normal) * normal
     }
 
-    let mut intersect = Intersect::empty();
-    let mut zbuffer = f32::INFINITY;
+    fn refract(incident: &Vec3, normal: &Vec3, eta_t: f32) -> Vec3 {
+        let cosi = -incident.dot(normal).max(-1.0).min(1.0);
 
-    for object in objects.iter() {
-        let i = object.ray_intersect(ray_origin, ray_direction);
-        if i.is_intersecting && i.distance < zbuffer {
-            zbuffer = i.distance;
-            intersect = i;
+        let (n_cosi, eta, n_normal);
+
+        if cosi < 0.0 {
+            n_cosi = -cosi;
+            eta = 1.0 / eta_t;
+            n_normal = -normal;
+        } else {
+            n_cosi = cosi;
+            eta = eta_t;
+            n_normal = *normal;
+        }
+
+        let k = 1.0 - eta * eta * (1.0 - n_cosi * n_cosi);
+
+        if k < 0.0 {
+            reflect(incident, &n_normal)
+        } else {
+            eta * incident + (eta * n_cosi - k.sqrt()) * n_normal
         }
     }
 
-    if !intersect.is_intersecting {
-        return SKYBOX_COLOR;
-    }
-
-    let mut color = Color::black();
-
-    for light in lights.iter() {
+    fn cast_shadow(
+        intersect: &Intersect,
+        light: &Light,
+        objects: &[Box<dyn RayIntersect>], // Use Box<dyn RayIntersect> for polymorphism
+    ) -> f32 {
         let light_dir = (light.position - intersect.point).normalize();
-        let view_dir = (ray_origin - intersect.point).normalize();
-        let reflect_dir = reflect(&-light_dir, &intersect.normal).normalize();
+        let light_distance = (light.position - intersect.point).magnitude();
 
-        let shadow_intensity = cast_shadow(&intersect, light, objects);
-        let light_intensity = light.intensity * (1.0 - shadow_intensity);
+        let shadow_ray_origin = offset_origin(intersect, &light_dir);
+        let mut shadow_intensity = 0.0;
 
-        let diffuse_intensity = intersect.normal.dot(&light_dir).max(0.0).min(1.0);
-        let diffuse = intersect.material.diffuse * intersect.material.albedo[0] * diffuse_intensity * light_intensity;
+        for object in objects.iter() {
+            let shadow_intersect = object.ray_intersect(&shadow_ray_origin, &light_dir);
+            if shadow_intersect.is_intersecting && shadow_intersect.distance < light_distance {
+                let distance_ratio = shadow_intersect.distance / light_distance;
+                shadow_intensity = 1.0 - distance_ratio.powf(2.0).min(1.0);
+                break;
+            }
+        }
 
-        let specular_intensity = view_dir.dot(&reflect_dir).max(0.0).powf(intersect.material.specular);
-        let specular = light.color.scale(intersect.material.albedo[1]) * specular_intensity * light_intensity;
-
-        let reflectivity = fresnel(&view_dir, &intersect.normal, 1.0, intersect.material.refractive_index);
-        let refractivity = 1.0 - reflectivity;
-
-        let reflect_color = if intersect.material.albedo[2] > 0.0 {
-            let reflect_dir = reflect(&ray_direction, &intersect.normal).normalize();
-            let reflect_origin = offset_origin(&intersect, &reflect_dir);
-            cast_ray(&reflect_origin, &reflect_dir, objects, lights, depth + 1)
-        } else {
-            Color::black()
-        };
-
-        let refract_color = if intersect.material.albedo[3] > 0.0 {
-            let refract_dir = refract(&ray_direction, &intersect.normal, intersect.material.refractive_index);
-            let refract_origin = offset_origin(&intersect, &refract_dir);
-            cast_ray(&refract_origin, &refract_dir, objects, lights, depth + 1)
-        } else {
-            Color::black()
-        };
-        // Combina los colores con los factores de Fresnel
-        color = color.add(&(diffuse + specular).scale(1.0 - intersect.material.albedo[2] - intersect.material.albedo[3]))
-                    .add(&reflect_color.scale(reflectivity * intersect.material.albedo[2]))
-                    .add(&refract_color.scale(refractivity * intersect.material.albedo[3]));
+        shadow_intensity
     }
 
-    color
-}
+
+
+    pub fn cast_ray(
+        ray_origin: &Vec3,
+        ray_direction: &Vec3,
+        objects: &[Box<dyn RayIntersect>],
+        lights: &[Light],
+        depth: u32,
+
+    ) -> Color {
+        if depth > 3 {
+            return SKYBOX_COLOR;
+        }
+
+        let mut intersect = Intersect::empty();
+        let mut zbuffer = f32::INFINITY;
+
+        for object in objects.iter() {
+            let i = object.ray_intersect(ray_origin, ray_direction);
+            if i.is_intersecting && i.distance < zbuffer {
+                zbuffer = i.distance;
+                intersect = i;
+            }
+        }
+
+        if !intersect.is_intersecting {
+            return SKYBOX_COLOR;
+        }
+
+        let mut color = Color::black();
+
+        for light in lights.iter() {
+            let light_dir = (light.position - intersect.point).normalize();
+            let view_dir = (ray_origin - intersect.point).normalize();
+            let reflect_dir = reflect(&-light_dir, &intersect.normal).normalize();
+
+            let shadow_intensity = cast_shadow(&intersect, light, objects);
+            let light_intensity = light.intensity * (1.0 - shadow_intensity);
+
+            let diffuse_intensity = intersect.normal.dot(&light_dir).max(0.0).min(1.0);
+            let diffuse = intersect.material.diffuse * intersect.material.albedo[0] * diffuse_intensity * light_intensity;
+
+            let specular_intensity = view_dir.dot(&reflect_dir).max(0.0).powf(intersect.material.specular);
+            let specular = light.color.scale(intersect.material.albedo[1]) * specular_intensity * light_intensity;
+
+
+
+            let reflect_color = if intersect.material.albedo[2] > 0.0 {
+                let reflect_dir = reflect(&ray_direction, &intersect.normal).normalize();
+                let reflect_origin = offset_origin(&intersect, &reflect_dir);
+                cast_ray(&reflect_origin, &reflect_dir, objects, lights, depth + 1)
+            } else {
+                Color::black()
+            };
+
+            let refract_color = if intersect.material.albedo[3] > 0.0 {
+                let refract_dir = refract(&ray_direction, &intersect.normal, intersect.material.refractive_index);
+                let refract_origin = offset_origin(&intersect, &refract_dir);
+                cast_ray(&refract_origin, &refract_dir, objects, lights, depth + 1)
+            } else {
+                Color::black()
+            };
+            // Combina los colores con los factores de Fresnel
+            color = color.add(&(diffuse + specular).scale(1.0 - intersect.material.albedo[2] - intersect.material.albedo[3]))
+            .add(&reflect_color.scale(intersect.material.albedo[2]))
+            .add(&refract_color.scale(intersect.material.albedo[3]));
+        }
+
+        color
+    }
 
 
 
 
-pub fn render(framebuffer: &mut Framebuffer, objects: &[Box<dyn RayIntersect>], camera: &Camera, lights: &[Light]) {
-    let width = framebuffer.width as f32;
-    let height = framebuffer.height as f32;
-    let aspect_ratio = width / height;
-    let fov = PI / 3.0;
-    let perspective_scale = (fov * 0.5).tan();
+    pub fn render(framebuffer: &mut Framebuffer, objects: &[Box<dyn RayIntersect>], camera: &Camera, lights: &[Light]) {
+        let width = framebuffer.width as f32;
+        let height = framebuffer.height as f32;
+        let aspect_ratio = width / height;
+        let fov = PI / 3.0;
+        let perspective_scale = (fov * 0.5).tan();
 
-    for y in 0..framebuffer.height {
-        for x in 0..framebuffer.width {
-            let screen_x = (2.0 * x as f32) / width - 1.0;
-            let screen_y = -(2.0 * y as f32) / height + 1.0;
+        for y in 0..framebuffer.height {
+            for x in 0..framebuffer.width {
+                let screen_x = (2.0 * x as f32) / width - 1.0;
+                let screen_y = -(2.0 * y as f32) / height + 1.0;
 
-            let screen_x = screen_x * aspect_ratio * perspective_scale;
-            let screen_y = screen_y * perspective_scale;
+                let screen_x = screen_x * aspect_ratio * perspective_scale;
+                let screen_y = screen_y * perspective_scale;
 
-            let ray_direction = normalize(&Vec3::new(screen_x, screen_y, -1.0));
-            let rotated_direction = camera.base_change(&ray_direction);
+                let ray_direction = normalize(&Vec3::new(screen_x, screen_y, -1.0));
+                let rotated_direction = camera.base_change(&ray_direction);
 
-            let pixel_color = cast_ray(&camera.eye, &rotated_direction, objects, lights, 0);
+                let pixel_color = cast_ray(&camera.eye, &rotated_direction, objects, lights, 0);
 
-            framebuffer.set_current_color(pixel_color.to_hex());
-            framebuffer.point(x, y);
+                framebuffer.set_current_color(pixel_color.to_hex());
+                framebuffer.point(x, y);
+            }
         }
     }
-}
 
 
-fn main() {
-    let window_width = 400;
-    let window_height = 250;
-    let framebuffer_width = 400;
-    let framebuffer_height =250;
-    let frame_delay = Duration::from_millis(16);
-    let rotation_speed = 0.05; // Ajusta este valor según lo necesario
+    fn main() {
+        let window_width = 400;
+        let window_height = 250;
+        let framebuffer_width = 400;
+        let framebuffer_height =250;
+        let frame_delay = Duration::from_millis(16);
+        let rotation_speed = 0.05; // Ajusta este valor según lo necesario
 
-    let mut framebuffer = Framebuffer::new(framebuffer_width, framebuffer_height);
+        let mut framebuffer = Framebuffer::new(framebuffer_width, framebuffer_height);
 
-    let mut window = Window::new(
-        "Refractor",
-        window_width,
-        window_height,
-        WindowOptions::default(),
-    ).unwrap();
+        let mut window = Window::new(
+            "Refractor",
+            window_width,
+            window_height,
+            WindowOptions::default(),
+        ).unwrap();
 
-    let rubber = Material::new(
-        Color::new(80, 0, 0),
-        1.0,
-        [0.9, 0.1, 0.0, 0.0],
-        0.0,
-    );
+        let rubber = Material::new(
+            Color::new(80, 0, 0),
+            1.0,
+            [0.9, 0.1, 0.0, 0.0],
+            0.0,
+        );
 
-    let ivory = Material::new(
-        Color::new(100, 100, 80),
-        50.0,
-        [0.6, 0.3, 0.6, 0.0],
-        0.0,
-    );
+        let ivory = Material::new(
+            Color::new(100, 100, 80),
+            50.0,
+            [0.6, 0.3, 0.6, 0.0],
+            0.0,
+        );
 
-    let glass = Material::new(
-        Color::new(255, 255, 255),
-        1425.0,
-        [0.0, 10.0, 0.5, 0.5],
-        0.3,
-    );
+        let glass = Material::new(
+            Color::new(255, 255, 255),
+            1425.0,
+            [0.0, 10.0, 0.5, 0.5],
+            0.3,
+        );
 
-    let block_material = Material::new(
-        Color::new(150, 75, 0), // Color similar a la madera
-        0.0,
-        [0.8, 0.2, 0.0, 0.0],
-        0.0,
-    );
+        let block_material = Material::new(
+            Color::new(150, 75, 0), // Color similar a la madera
+            0.0,
+            [0.8, 0.2, 0.0, 0.0],
+            0.0,
+        );
 
-    let water_material = Material::new(
-        Color::new(0, 0, 255),
-        0.0,
-        [0.0, 0.0, 0.0, 1.0], 
-        0.0,
-    );
-    
-        let mirror = Material::new(
-        Color::new(255, 255, 255), // El color no importa mucho aquí
-        1000.0,                    // Alto valor especular
-        [0.0, 1.0, 0.0, 0.0],      // Totalmente reflectivo
-        1.5                        // Índice de refracción alto, como el vidrio
-    );
+        let water_material = Material::new(
+            Color::new(0, 0, 255),
+            0.0,
+            [0.0, 0.0, 0.0, 1.0], 
+            0.0,
+        );
+        
+            let mirror = Material::new(
+            Color::new(255, 255, 255), // El color no importa mucho aquí
+            1000.0,                    // Alto valor especular
+            [0.0, 1.0, 0.0, 0.0],      // Totalmente reflectivo
+            1.5                        // Índice de refracción alto, como el vidrio
+        );
 
-    let lava_material = Material::new(
-        Color::new(255, 0, 0), // Color rojo para la lava
-        1.0,
-        [0.0, 1.0, 0.0, 0.0], // No reflexión, pero brillo
-        1.0, // Alta reflectividad para simular lava brillante
-    );
-
-    let lava_light = Light::new(
-        Vec3::new(0.0, 0.0, -0.5), // Alinea la luz con el centro del bloque de lava
-        Color::new(255, 100, 0),    // Color brillante para la lava
-        5.0                         // Intensidad de la luz
-    );
-    
-    
-    
-    let sunlight = Light::new(
-        Vec3::new(0.0, 0.0, -5.0),
-        Color::new(255, 255, 255),
-        0.5,
-    );
+        let lava_material = Material::new(
+            Color::new(255, 0, 0), // Color rojo para la lava
+            1.0,
+            [0.0, 1.0, 0.0, 0.0], // No reflexión, pero brillo
+            2.0, // Alta reflectividad para simular lava brillante
+        );
 
 
-    let objects: Vec<Box<dyn RayIntersect>> = vec![
-        // Agua
-        Box::new(Block { 
-            min: Vec3::new(-2.0, -2.0, -2.0), 
-            max: Vec3::new(-1.0, 2.0, -1.0), 
-            material: water_material 
-        }),
-        Box::new(Block { 
-            min: Vec3::new(1.0, -2.0, -2.0), 
-            max: Vec3::new(2.0, 2.0, -1.0), 
-            material: water_material 
-        }),
+        let objects: Vec<Box<dyn RayIntersect>> = vec![
+            // Agua
+            Box::new(Block { 
+                min: Vec3::new(-2.0, -2.0, -2.0), 
+                max: Vec3::new(-1.0, 2.0, -1.0), 
+                material: water_material 
+            }),
+            Box::new(Block { 
+                min: Vec3::new(1.0, -2.0, -2.0), 
+                max: Vec3::new(2.0, 2.0, -1.0), 
+                material: water_material 
+            }),
 
-        // Bloque de lava en el centro
-        Box::new(Block { 
-            min: Vec3::new(-0.5, -0.5, -1.0), 
-            max: Vec3::new(0.5, 0.5, 0.0), 
-            material: lava_material 
-        }),
+            // Bloque de lava en el centro
+            Box::new(Block { 
+                min: Vec3::new(-0.5, -0.5, -1.0), 
+                max: Vec3::new(0.5, 0.5, 0.0), 
+                material: lava_material 
+            }),
 
-        // Espejo en el fondo derecho
-        Box::new(Block { 
-            min: Vec3::new(3.0, -2.0, -1.0), 
-            max: Vec3::new(4.0, 2.0, 1.0), 
-            material: mirror 
-        }),
+            // Espejo en el fondo derecho lo mande hasta la derecha por pruebas
+            Box::new(Block { 
+                min: Vec3::new(7.0, -2.0, -1.0), 
+                max: Vec3::new(7.5, 2.0, 1.0), 
+                material: mirror 
+            }),
 
-        // Bloque de madera a la izquierda
-        Box::new(Block { 
-            min: Vec3::new(-3.5, -1.5, 0.0), 
-            max: Vec3::new(1.5, 1.5, 2.0), 
-            material: block_material 
-        }),
+            // Bloque de madera a la izquierda esto es el bloque que se ve naranja.
+            Box::new(Block { 
+                min: Vec3::new(-5.5, -1.5, 3.0), 
+                max: Vec3::new(1.5, 1.5, 2.0), 
+                material: block_material 
+            }),
 
-        // Bloques con diferentes materiales para variedad visual
-        Box::new(Block { 
-            min: Vec3::new(-3.5, -1.5, 0.0), 
-            max: Vec3::new(1.5, 1.5, 2.0), 
-            material: ivory 
-        }),
-        Box::new(Block { 
-            min: Vec3::new(3.0, -2.0, -1.0), 
-            max: Vec3::new(4.0, 2.0, 1.0), 
-            material: rubber 
-        }),
-    ];
+            // Bloques con diferentes materiales para variedad visual es lo azul que se ve como agua
+            Box::new(Block { 
+                min: Vec3::new(3.5, -1.5, 0.0), 
+                max: Vec3::new(5.5, 1.5, 2.0), 
+                material: ivory 
+            }),
+            Box::new(Block { 
+                min: Vec3::new(-6.0, -2.0, -1.0), 
+                max: Vec3::new(-8.0, 2.0, 1.0), 
+                material: rubber 
+            }),
+        ];
 
 
-    
+        
+        let mut lava_light_active = true; // Variable para controlar el estado de la luz
 
-    let mut camera = Camera::new(
-        Vec3::new(0.0, 0.0, 5.0),
-        Vec3::new(0.0, 0.0, 0.0),
-        Vec3::new(0.0, 1.0, 0.0) // Vector 'up'
-    );
+        let mut camera = Camera::new(
+            Vec3::new(0.0, 0.0, 5.0),
+            Vec3::new(0.0, 0.0, 0.0),
+            Vec3::new(0.0, 1.0, 0.0) // Vector 'up'
+        );
 
-    let lights = vec![
-        lava_light,
-        sunlight,
-    ];
+        while window.is_open() {
+            if window.is_key_down(Key::Left) {
+                camera.orbit(rotation_speed, 0.0); 
+            }
 
-    while window.is_open() {
-        if window.is_key_down(Key::Left) {
-            camera.orbit(rotation_speed, 0.0); 
+            if window.is_key_down(Key::Right) {
+                camera.orbit(-rotation_speed, 0.0);
+            }
+
+            if window.is_key_down(Key::Up) {
+                camera.orbit(0.0, -rotation_speed);
+            }
+
+            if window.is_key_down(Key::Down) {
+                camera.orbit(0.0, rotation_speed);
+            }
+
+            // Manejo de la entrada del teclado
+            if window.is_key_down(Key::S) {
+                camera.zoom(-0.1); // Acercar
+            }
+            if window.is_key_down(Key::W) {
+                camera.zoom(0.1); // Alejar
+            }
+            if window.is_key_down(Key::L) { //L para la luz de la lava 
+            lava_light_active = !lava_light_active; // Alterna el estado
+            println!("Luz de lava activa: {}", lava_light_active); // Debug
         }
 
-        if window.is_key_down(Key::Right) {
-            camera.orbit(-rotation_speed, 0.0);
+        let lava_light = Light::new(
+            Vec3::new(-0.5, -0.5, -0.5), // Alinea la luz con el centro del bloque de lava
+            Color::new(255, 100, 0),    // Color brillante para la lava
+            if lava_light_active ==false { 5.0 } else { 0.0 }, // Cambia la intensidad según el estado // Intensidad de la luz
+            true,              
+        );
+        
+        
+        let sunlight = Light::new(
+            Vec3::new(0.0, 10.0, 0.0),
+            Color::new(255, 255, 0),
+            0.5,
+            true,
+        );
+
+        let lights = vec![
+            lava_light,
+            sunlight,
+        ];
+
+            render(&mut framebuffer, &objects, &camera, &lights);
+
+            window
+                .update_with_buffer(&framebuffer.buffer, framebuffer_width, framebuffer_height)
+                .unwrap();
+
+            std::thread::sleep(frame_delay);
         }
-
-        if window.is_key_down(Key::Up) {
-            camera.orbit(0.0, -rotation_speed);
-        }
-
-        if window.is_key_down(Key::Down) {
-            camera.orbit(0.0, rotation_speed);
-        }
-
-        // Manejo de la entrada del teclado
-        if window.is_key_down(Key::S) {
-            camera.zoom(-0.1); // Acercar
-        }
-        if window.is_key_down(Key::W) {
-            camera.zoom(0.1); // Alejar
-        }
-
-        render(&mut framebuffer, &objects, &camera, &lights);
-
-        window
-            .update_with_buffer(&framebuffer.buffer, framebuffer_width, framebuffer_height)
-            .unwrap();
-
-        std::thread::sleep(frame_delay);
     }
-}
