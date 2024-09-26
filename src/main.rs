@@ -258,54 +258,30 @@
         );
 
 
-        let objects: Vec<Box<dyn RayIntersect>> = vec![
-            // Agua
-            Box::new(Block { 
-                min: Vec3::new(-2.0, -2.0, -2.0), 
-                max: Vec3::new(-1.0, 2.0, -1.0), 
-                material: water_material 
-            }),
-            Box::new(Block { 
-                min: Vec3::new(1.0, -2.0, -2.0), 
-                max: Vec3::new(2.0, 2.0, -1.0), 
-                material: water_material 
-            }),
+        let mut objects: Vec<Box<dyn RayIntersect>> = vec![];
 
-            // Bloque de lava en el centro
-            Box::new(Block { 
-                min: Vec3::new(-0.5, -0.5, -1.0), 
-                max: Vec3::new(0.5, 0.5, 0.0), 
-                material: lava_material 
-            }),
-
-            // Espejo en el fondo derecho lo mande hasta la derecha por pruebas
-            Box::new(Block { 
-                min: Vec3::new(7.0, -2.0, -1.0), 
-                max: Vec3::new(7.5, 2.0, 1.0), 
-                material: mirror 
-            }),
-
-            // Bloque de madera a la izquierda esto es el bloque que se ve naranja.
-            Box::new(Block { 
-                min: Vec3::new(-5.5, -1.5, 3.0), 
-                max: Vec3::new(1.5, 1.5, 2.0), 
-                material: block_material 
-            }),
-
-            // Bloques con diferentes materiales para variedad visual es lo azul que se ve como agua
-            Box::new(Block { 
-                min: Vec3::new(3.5, -1.5, 0.0), 
-                max: Vec3::new(5.5, 1.5, 2.0), 
-                material: ivory 
-            }),
-            Box::new(Block { 
-                min: Vec3::new(-6.0, -2.0, -1.0), 
-                max: Vec3::new(-8.0, 2.0, 1.0), 
-                material: rubber 
-            }),
-        ];
-
-
+        // Paredes
+        let wall_height = 2.0; // Altura de las paredes
+        let wall_thickness = 0.1; // Grosor de las paredes
+        
+        // Pared frontal
+        objects.push(Box::new(Block { min: Vec3::new(-1.0, -1.0, 1.0), max: Vec3::new(1.0, wall_height - 1.0, 1.0 + wall_thickness), material: block_material }));
+        
+        // Pared trasera
+        objects.push(Box::new(Block { min: Vec3::new(-1.0, -1.0, -1.0 - wall_thickness), max: Vec3::new(1.0, wall_height - 1.0, -1.0), material: block_material }));
+        
+        // Pared izquierda
+        objects.push(Box::new(Block { min: Vec3::new(-1.0 - wall_thickness, -1.0, -1.0), max: Vec3::new(-1.0, wall_height - 1.0, 1.0), material: block_material }));
+        
+        // Pared derecha
+        objects.push(Box::new(Block { min: Vec3::new(1.0, -1.0, -1.0), max: Vec3::new(1.0 + wall_thickness, wall_height - 1.0, 1.0), material: block_material }));
+        
+        // Ventana
+        objects.push(Box::new(Block { min: Vec3::new(-0.5, 0.0, 1.1), max: Vec3::new(0.5, 1.0, 1.1 + wall_thickness), material: ivory }));
+        
+        // Puerta
+        objects.push(Box::new(Block { min: Vec3::new(-0.5, -1.0, 1.0), max: Vec3::new(0.5, 0.0, 1.0 + wall_thickness), material: ivory }));
+        
         
         let mut lava_light_active = true; // Variable para controlar el estado de la luz
 
