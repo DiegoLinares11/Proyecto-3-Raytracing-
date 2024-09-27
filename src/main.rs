@@ -251,9 +251,9 @@
         );
 
         let lava_material = Material::new(
-            Color::new(255, 0, 0), // Color rojo para la lava
+            Color::new(255, 100, 0), // Color rojo para la lava
             1.0,
-            [0.0, 1.0, 0.0, 0.0], // No reflexión, pero brillo
+            [1.0, 1.0, 0.0, 0.0], // No reflexión, pero brillo
             2.0, // Alta reflectividad para simular lava brillante
         );
 
@@ -278,10 +278,55 @@
         // Techo a la mitad
         objects.push(Box::new(Block { min: Vec3::new(-room_width, wall_height / 2.0, -room_depth), max: Vec3::new(room_width/2.0, (wall_height / 2.0) + wall_thickness, room_depth), material: block_material }));
         
+        //Bloque de lava
+        objects.push(Box::new(Block { min: Vec3::new(-room_width - wall_thickness, -0.9, -room_depth-wall_thickness), max: Vec3::new(-1.0, -0.5, -1.0), material: lava_material }));
+
+        //Empezare agregando bloques raros en medio esperando que pueda agregarles texturas.
+        //Bloque de el medio medio
+        objects.push(Box::new(Block { min: Vec3::new(-0.2 , -0.9, -0.4), max: Vec3::new(0.1, -0.65, -0.1), material: ivory }));
         
+        //Bloque a la izquierda del de enmedio
+        //Otro bloque a la par: 
+        objects.push(Box::new(Block { min: Vec3::new(-0.5 , -0.9, -0.4), max: Vec3::new(-0.2, -0.65, -0.1), material: lava_material }));
+
+        //Otro bloque a la par: 
+        objects.push(Box::new(Block { min: Vec3::new(-0.8 , -0.9, -0.4), max: Vec3::new(-0.5, -0.65, -0.1), material: ivory }));
+
+        //Empezar con los bloques a la derecha del medio.
+        objects.push(Box::new(Block { min: Vec3::new(0.1 , -0.9, -0.4), max: Vec3::new(0.4, -0.65, -0.1), material: lava_material }));
+
+        //Empezar con los bloques a la derecha del medio.
+        objects.push(Box::new(Block { min: Vec3::new(0.4 , -0.9, -0.4), max: Vec3::new(0.7, -0.65, -0.1), material: ivory }));
+
+
+        //Otro bloque a la par, aqui iran el flujo de los bloques de hasta el fondo
+        objects.push(Box::new(Block { min: Vec3::new(-0.5 , -0.9, -0.7), max: Vec3::new(-0.2, -0.65, -0.4), material: ivory }));
+        objects.push(Box::new(Block { min: Vec3::new(-0.8 , -0.9, -0.7), max: Vec3::new(-0.5, -0.65, -0.4), material: lava_material }));
+        objects.push(Box::new(Block { min: Vec3::new(-0.2 , -0.9, -0.7), max: Vec3::new(0.1, -0.65, -0.4), material: lava_material }));
+        objects.push(Box::new(Block { min: Vec3::new(0.1 , -0.9, -0.7), max: Vec3::new(0.4, -0.65, -0.4), material: ivory }));
+        objects.push(Box::new(Block { min: Vec3::new(0.4 , -0.9, -0.7), max: Vec3::new(0.7, -0.65, -0.4), material: ivory }));
+
+        //iran el flujo de los bloques una capa enfrente de los de enmedio
+        objects.push(Box::new(Block { min: Vec3::new(-0.5 , -0.9, -0.1), max: Vec3::new(-0.2, -0.65, 0.2), material: ivory }));
+        objects.push(Box::new(Block { min: Vec3::new(-0.8 , -0.9, -0.1), max: Vec3::new(-0.5, -0.65, 0.2), material: lava_material }));
+        objects.push(Box::new(Block { min: Vec3::new(-0.2 , -0.9, -0.1), max: Vec3::new(0.1, -0.65, 0.2), material: lava_material }));
+        objects.push(Box::new(Block { min: Vec3::new(0.1 , -0.9, -0.1), max: Vec3::new(0.4, -0.65, 0.2), material: ivory }));
+        objects.push(Box::new(Block { min: Vec3::new(0.4 , -0.9, -0.1), max: Vec3::new(0.7, -0.65, 0.2), material: ivory }));
 
         
-        
+        //iran el flujo de los bloques dos capas enfrente de los de enmedio
+        objects.push(Box::new(Block { min: Vec3::new(-0.5 , -0.9, 0.2), max: Vec3::new(-0.2, -0.65, 0.5), material: ivory }));
+        objects.push(Box::new(Block { min: Vec3::new(-0.8 , -0.9, 0.2), max: Vec3::new(-0.5, -0.65, 0.5), material: lava_material }));
+        objects.push(Box::new(Block { min: Vec3::new(-0.2 , -0.9, 0.2), max: Vec3::new(0.1, -0.65, 0.5), material: lava_material }));
+        objects.push(Box::new(Block { min: Vec3::new(0.1 , -0.9, 0.2), max: Vec3::new(0.4, -0.65, 0.5), material: ivory }));
+        objects.push(Box::new(Block { min: Vec3::new(0.4 , -0.9, 0.2), max: Vec3::new(0.7, -0.65, 0.5), material: ivory }));
+
+
+
+
+
+
+
         let mut lava_light_active = true; // Variable para controlar el estado de la luz
 
         let mut camera = Camera::new(
@@ -320,7 +365,7 @@
         }
 
         let lava_light = Light::new(
-            Vec3::new(-0.5, -0.5, -0.5), // Alinea la luz con el centro del bloque de lava
+            Vec3::new((-room_width-wall_thickness-1.0)/2.0, (-1.0-0.5)/2.0, -1.25), // Alinea la luz con el centro del bloque de lava
             Color::new(255, 100, 0),    // Color brillante para la lava
             if lava_light_active ==false { 5.0 } else { 0.0 }, // Cambia la intensidad según el estado // Intensidad de la luz
             true,              
@@ -328,7 +373,7 @@
         
         
         let sunlight = Light::new(
-            Vec3::new(0.0, 10.0, 0.0),
+            Vec3::new(5.0, 5.0, 0.0),
             Color::new(255, 255, 0),
             0.5,
             true,
