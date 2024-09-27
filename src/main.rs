@@ -283,43 +283,44 @@
 
         //Empezare agregando bloques raros en medio esperando que pueda agregarles texturas.
         //Bloque de el medio medio
-        objects.push(Box::new(Block { min: Vec3::new(-0.2 , -0.9, -0.4), max: Vec3::new(0.1, -0.65, -0.1), material: ivory }));
+        objects.push(Box::new(Block { min: Vec3::new(-0.2 , -0.9, -0.4), max: Vec3::new(0.1, -0.7, -0.1), material: ivory }));
         
         //Bloque a la izquierda del de enmedio
         //Otro bloque a la par: 
-        objects.push(Box::new(Block { min: Vec3::new(-0.5 , -0.9, -0.4), max: Vec3::new(-0.2, -0.65, -0.1), material: lava_material }));
+        objects.push(Box::new(Block { min: Vec3::new(-0.5 , -0.9, -0.4), max: Vec3::new(-0.2, -0.7, -0.1), material: lava_material }));
 
         //Otro bloque a la par: 
-        objects.push(Box::new(Block { min: Vec3::new(-0.8 , -0.9, -0.4), max: Vec3::new(-0.5, -0.65, -0.1), material: ivory }));
+        objects.push(Box::new(Block { min: Vec3::new(-0.8 , -0.9, -0.4), max: Vec3::new(-0.5, -0.7, -0.1), material: ivory }));
 
         //Empezar con los bloques a la derecha del medio.
-        objects.push(Box::new(Block { min: Vec3::new(0.1 , -0.9, -0.4), max: Vec3::new(0.4, -0.65, -0.1), material: lava_material }));
+        objects.push(Box::new(Block { min: Vec3::new(0.1 , -0.9, -0.4), max: Vec3::new(0.4, -0.7, -0.1), material: lava_material }));
 
         //Empezar con los bloques a la derecha del medio.
-        objects.push(Box::new(Block { min: Vec3::new(0.4 , -0.9, -0.4), max: Vec3::new(0.7, -0.65, -0.1), material: ivory }));
+        objects.push(Box::new(Block { min: Vec3::new(0.4 , -0.9, -0.4), max: Vec3::new(0.7, -0.7, -0.1), material: ivory }));
 
 
         //Otro bloque a la par, aqui iran el flujo de los bloques de hasta el fondo
-        objects.push(Box::new(Block { min: Vec3::new(-0.5 , -0.9, -0.7), max: Vec3::new(-0.2, -0.65, -0.4), material: ivory }));
-        objects.push(Box::new(Block { min: Vec3::new(-0.8 , -0.9, -0.7), max: Vec3::new(-0.5, -0.65, -0.4), material: lava_material }));
-        objects.push(Box::new(Block { min: Vec3::new(-0.2 , -0.9, -0.7), max: Vec3::new(0.1, -0.65, -0.4), material: lava_material }));
-        objects.push(Box::new(Block { min: Vec3::new(0.1 , -0.9, -0.7), max: Vec3::new(0.4, -0.65, -0.4), material: ivory }));
-        objects.push(Box::new(Block { min: Vec3::new(0.4 , -0.9, -0.7), max: Vec3::new(0.7, -0.65, -0.4), material: ivory }));
+        objects.push(Box::new(Block { min: Vec3::new(-0.5 , -0.9, -0.7), max: Vec3::new(-0.2, -0.7, -0.4), material: ivory }));
+        objects.push(Box::new(Block { min: Vec3::new(-0.8 , -0.9, -0.7), max: Vec3::new(-0.5, -0.7, -0.4), material: lava_material }));
+        objects.push(Box::new(Block { min: Vec3::new(-0.2 , -0.9, -0.7), max: Vec3::new(0.1, -0.7, -0.4), material: lava_material }));
+        objects.push(Box::new(Block { min: Vec3::new(0.1 , -0.9, -0.7), max: Vec3::new(0.4, -0.7, -0.4), material: ivory }));
+        objects.push(Box::new(Block { min: Vec3::new(0.4 , -0.9, -0.7), max: Vec3::new(0.7, -0.7, -0.4), material: ivory }));
+
 
         //iran el flujo de los bloques una capa enfrente de los de enmedio
-        objects.push(Box::new(Block { min: Vec3::new(-0.5 , -0.9, -0.1), max: Vec3::new(-0.2, -0.65, 0.2), material: ivory }));
-        objects.push(Box::new(Block { min: Vec3::new(-0.8 , -0.9, -0.1), max: Vec3::new(-0.5, -0.65, 0.2), material: lava_material }));
-        objects.push(Box::new(Block { min: Vec3::new(-0.2 , -0.9, -0.1), max: Vec3::new(0.1, -0.65, 0.2), material: lava_material }));
-        objects.push(Box::new(Block { min: Vec3::new(0.1 , -0.9, -0.1), max: Vec3::new(0.4, -0.65, 0.2), material: ivory }));
-        objects.push(Box::new(Block { min: Vec3::new(0.4 , -0.9, -0.1), max: Vec3::new(0.7, -0.65, 0.2), material: ivory }));
+        objects.push(Box::new(Block { min: Vec3::new(-0.5 , -0.9, -0.1), max: Vec3::new(-0.2, -0.7, 0.2), material: ivory }));
+        objects.push(Box::new(Block { min: Vec3::new(-0.8 , -0.9, -0.1), max: Vec3::new(-0.5, -0.7, 0.2), material: lava_material }));
+        objects.push(Box::new(Block { min: Vec3::new(-0.2 , -0.9, -0.1), max: Vec3::new(0.1, -0.7, 0.2), material: lava_material }));
+        objects.push(Box::new(Block { min: Vec3::new(0.1 , -0.9, -0.1), max: Vec3::new(0.4, -0.7, 0.2), material: ivory }));
+        objects.push(Box::new(Block { min: Vec3::new(0.4 , -0.9, -0.1), max: Vec3::new(0.7, -0.7, 0.2), material: ivory }));
 
         
         //iran el flujo de los bloques dos capas enfrente de los de enmedio
-        objects.push(Box::new(Block { min: Vec3::new(-0.5 , -0.9, 0.2), max: Vec3::new(-0.2, -0.65, 0.5), material: ivory }));
-        objects.push(Box::new(Block { min: Vec3::new(-0.8 , -0.9, 0.2), max: Vec3::new(-0.5, -0.65, 0.5), material: lava_material }));
-        objects.push(Box::new(Block { min: Vec3::new(-0.2 , -0.9, 0.2), max: Vec3::new(0.1, -0.65, 0.5), material: lava_material }));
-        objects.push(Box::new(Block { min: Vec3::new(0.1 , -0.9, 0.2), max: Vec3::new(0.4, -0.65, 0.5), material: ivory }));
-        objects.push(Box::new(Block { min: Vec3::new(0.4 , -0.9, 0.2), max: Vec3::new(0.7, -0.65, 0.5), material: ivory }));
+        objects.push(Box::new(Block { min: Vec3::new(-0.5 , -0.9, 0.2), max: Vec3::new(-0.2, -0.7, 0.5), material: ivory }));
+        objects.push(Box::new(Block { min: Vec3::new(-0.8 , -0.9, 0.2), max: Vec3::new(-0.5, -0.7, 0.5), material: lava_material }));
+        objects.push(Box::new(Block { min: Vec3::new(-0.2 , -0.9, 0.2), max: Vec3::new(0.1, -0.7, 0.5), material: lava_material }));
+        objects.push(Box::new(Block { min: Vec3::new(0.1 , -0.9, 0.2), max: Vec3::new(0.4, -0.7, 0.5), material: ivory }));
+        objects.push(Box::new(Block { min: Vec3::new(0.4 , -0.9, 0.2), max: Vec3::new(0.7, -0.7, 0.5), material: ivory }));
 
 
 
