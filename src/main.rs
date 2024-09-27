@@ -272,7 +272,6 @@
         objects.push(Box::new(Block { min: Vec3::new(-room_width - wall_thickness, -1.0, -room_depth), max: Vec3::new(-room_width, wall_height - 1.0, room_depth), material: block_material }));
         
         
-        
         // Suelo
         objects.push(Box::new(Block { min: Vec3::new(-room_width, -1.0, -room_depth), max: Vec3::new(room_width, -1.0 + wall_thickness, room_depth), material: block_material }));
         
