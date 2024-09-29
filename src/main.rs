@@ -214,7 +214,7 @@
 
         let ivory = Material::new(
             Color::new(100, 100, 80),
-            50.0,
+            0.0,
             [0.6, 0.3, 0.6, 0.0],
             0.0,
 
@@ -374,6 +374,10 @@
         objects.push(Box::new(Block { min: Vec3::new(-0.5 , 0.3, -0.3), max: Vec3::new(-0.3, 0.5, -0.1), material: block_material }));
         objects.push(Box::new(Block { min: Vec3::new(0.1 , 0.3, -0.5), max: Vec3::new(0.3, 0.5, -0.3), material: lava_material }));
         objects.push(Box::new(Block { min: Vec3::new(0.3 , 0.3, -0.3), max: Vec3::new(0.5, 0.5, -0.1), material: block_material }));  
+        objects.push(Box::new(Block { min: Vec3::new(0.3 , 0.3, -0.1), max: Vec3::new(0.5, 0.5, 0.1), material: block_material }));  
+        objects.push(Box::new(Block { min: Vec3::new(0.3 , 0.3, 0.3), max: Vec3::new(0.5, 0.5, 0.5), material: block_material }));  
+        objects.push(Box::new(Block { min: Vec3::new(-0.5 , 0.3, 0.3), max: Vec3::new(-0.3, 0.5, 0.5), material: block_material }));  
+
         
         // Bloques randoms hasta arriba mas arriba
         //objects.push(Box::new(Block { min: Vec3::new(-0.1 , 0.5, -0.5), max: Vec3::new(0.1, 0.7, -0.3), material: ivory }));
@@ -381,6 +385,8 @@
         objects.push(Box::new(Block { min: Vec3::new(-0.5 , 0.5, -0.5), max: Vec3::new(-0.3, 0.7, -0.3), material: block_material }));
         objects.push(Box::new(Block { min: Vec3::new(0.1 , 0.5, -0.5), max: Vec3::new(0.3, 0.7, -0.3), material: lava_material }));
         objects.push(Box::new(Block { min: Vec3::new(0.3 , 0.5, -0.5), max: Vec3::new(0.5, 0.7, -0.3), material: block_material }));  
+        objects.push(Box::new(Block { min: Vec3::new(0.3 , 0.5, -0.3), max: Vec3::new(0.5, 0.7, -0.1), material: block_material }));  
+        objects.push(Box::new(Block { min: Vec3::new(0.3 , 0.7, -0.5), max: Vec3::new(0.5, 0.9, -0.3), material: block_material }));  
 
 
         //Otro bloque a la par, aqui iran el flujo de los bloques de hasta el fondo
